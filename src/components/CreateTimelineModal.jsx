@@ -7,10 +7,34 @@ export default function CreateTimelineModal({ onClose }) {
   const [title, setTitle] = useState("");
   const [isPublic, setIsPublic] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log({ title, isPublic });
-    onClose(); // close modal after handling
+
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (!user) {
+      alert("You're not logged in!");
+      return;
+    }
+
+    try {
+      const res = await fetch("http://localhost:5000/api/timelines/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          title,
+          isPublic,
+        }),
+      });
+
+      const data = await res.json();
+      onClose(); // close modal
+    } catch (err) {
+      console.error("Timeline creation error:", err);
+      alert("Something went wrong!");
+    }
   };
 
   return (

@@ -12,6 +12,7 @@ export default function DashboardLayout() {
 
   return (
     <div className="min-h-screen flex bg-black text-white">
+      {/* Background bars */}
       {/* Sidebar Navigation */}
       <motion.aside
         initial={{ x: -100, opacity: 0 }}
@@ -56,7 +57,7 @@ export default function DashboardLayout() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4 }}
-        className="flex-1 p-10 overflow-y-auto"
+        className="flex-1 p-10 overflow-y-auto "
       >
         <Outlet />
       </motion.main>
