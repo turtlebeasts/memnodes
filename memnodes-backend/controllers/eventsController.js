@@ -5,20 +5,53 @@ exports.addEvent = async (req, res) => {
     const { title, description, date, previous_event_id } = req.body;
     const { timelineId } = req.params;
 
-    // Validate input
     if (!title || !date || !timelineId) {
       return res.status(400).json({ success: false, message: "Missing data" });
     }
 
-    // Step 1: Insert new event
+    let position = 0;
+    let next_event_id = null;
+
+    // Step 1: Determine position and next_event_id
+    if (previous_event_id) {
+      const [prevRows] = await db.execute(
+        "SELECT position, next_event_id FROM events WHERE id = ?",
+        [previous_event_id]
+      );
+
+      if (prevRows.length === 0) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid previous_event_id" });
+      }
+
+      const prev = prevRows[0];
+      position = prev.position + 1;
+      next_event_id = prev.next_event_id;
+
+      // Step 2: Shift positions of all events after this
+      await db.execute(
+        "UPDATE events SET position = position + 1 WHERE timeline_id = ? AND position >= ?",
+        [timelineId, position]
+      );
+    } else {
+      // No previous node — put this at the beginning
+      const [maxPosRow] = await db.execute(
+        "SELECT MAX(position) AS maxPos FROM events WHERE timeline_id = ?",
+        [timelineId]
+      );
+      position = (maxPosRow[0].maxPos ?? -1) + 1;
+    }
+
+    // Step 3: Insert new event
     const [result] = await db.execute(
-      "INSERT INTO events (timeline_id, title, description, date) VALUES (?, ?, ?, ?)",
-      [timelineId, title, description, date]
+      "INSERT INTO events (timeline_id, title, description, date, next_event_id, position) VALUES (?, ?, ?, ?, ?, ?)",
+      [timelineId, title, description, date, next_event_id, position]
     );
 
     const newEventId = result.insertId;
 
-    // Step 2: If this event has a previous one, update it
+    // Step 4: Update previous_event to point to this one
     if (previous_event_id) {
       await db.execute("UPDATE events SET next_event_id = ? WHERE id = ?", [
         newEventId,
@@ -26,7 +59,7 @@ exports.addEvent = async (req, res) => {
       ]);
     }
 
-    // Step 3: Fetch the newly created event
+    // Step 5: Return the newly created event
     const [rows] = await db.execute("SELECT * FROM events WHERE id = ?", [
       newEventId,
     ]);
@@ -42,12 +75,13 @@ exports.getEventsByTimeline = async (req, res) => {
   try {
     const { timelineId } = req.params;
 
+    // Fetch all events ordered by their position value
     const [events] = await db.execute(
-      "SELECT * FROM events WHERE timeline_id = ?",
+      "SELECT * FROM events WHERE timeline_id = ? ORDER BY position ASC",
       [timelineId]
     );
 
-    res.json(events);
+    res.status(200).json(events);
   } catch (err) {
     console.error("Get Events Error:", err.message);
     res.status(500).json({ success: false, message: "Server Error" });

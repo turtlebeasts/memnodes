@@ -8,18 +8,27 @@ export default function TimelineEditor() {
   const { id: timelineId } = useParams();
   const [events, setEvents] = useState([]);
   const [showModal, setShowModal] = useState(false);
+  const [insertingAfterId, setInsertingAfterId] = useState(null);
+
+  const loadEvents = async () => {
+    const data = await fetchEvents(timelineId);
+    setEvents(data);
+  };
 
   useEffect(() => {
-    (async () => {
-      const data = await fetchEvents(timelineId);
-      setEvents(data);
-    })();
+    loadEvents();
   }, [timelineId]);
 
   const handleCreate = async (eventData) => {
-    const newEvent = await createEvent(timelineId, eventData);
-    setEvents((prev) => [...prev, newEvent]);
+    await createEvent(timelineId, {
+      ...eventData,
+      previous_event_id: insertingAfterId,
+    });
+
+    await loadEvents();
+
     setShowModal(false);
+    setInsertingAfterId(null);
   };
 
   return (
@@ -28,16 +37,25 @@ export default function TimelineEditor() {
 
       {events.length === 0 ? (
         <button
-          onClick={() => setShowModal(true)}
+          onClick={() => {
+            setInsertingAfterId(null);
+            setShowModal(true);
+          }}
           className="bg-white text-black px-6 py-3 rounded shadow"
         >
           + Add your first event
         </button>
       ) : (
-        <div className="flex gap-6 items-center">
+        <div className="flex gap-6 items-center flex-wrap">
           {events.map((event, index) => (
             <div key={event.id} className="flex items-center">
-              <EventNode event={event} onAddNext={() => setShowModal(true)} />
+              <EventNode
+                event={event}
+                onAddNext={() => {
+                  setInsertingAfterId(event.id);
+                  setShowModal(true);
+                }}
+              />
               {index < events.length - 1 && (
                 <div className="w-10 h-1 bg-white" />
               )}
@@ -50,6 +68,10 @@ export default function TimelineEditor() {
         <AddEventModal
           onClose={() => setShowModal(false)}
           onSubmit={handleCreate}
+          previous_event_id={insertingAfterId}
+          previousEventTitle={
+            events.find((e) => e.id === insertingAfterId)?.title
+          }
         />
       )}
     </div>

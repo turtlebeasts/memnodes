@@ -58,3 +58,38 @@ exports.deleteTimeline = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+exports.getPublicTimelines = async (req, res) => {
+  try {
+    const [timelines] = await db.execute(`
+      SELECT t.id, t.title, t.created_at, u.name AS author
+      FROM timelines t
+      JOIN users u ON t.user_id = u.id
+      WHERE t.is_public = 1
+      ORDER BY t.created_at DESC
+    `);
+
+    // Step 2: Attach first 3 events to each timeline
+    for (const timeline of timelines) {
+      const [events] = await db.execute(
+        `
+        SELECT
+          title,
+          date,
+          CASE WHEN date > CURDATE() THEN TRUE ELSE FALSE END AS future
+        FROM events
+        WHERE timeline_id = ?
+        ORDER BY position ASC
+        LIMIT 3
+        `,
+        [timeline.id]
+      );
+      timeline.previewEvents = events;
+    }
+
+    res.status(200).json({ success: true, timelines });
+  } catch (err) {
+    console.error("Feed Fetch Error:", err.message);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};

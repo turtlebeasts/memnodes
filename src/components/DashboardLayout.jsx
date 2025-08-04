@@ -6,7 +6,7 @@ export default function DashboardLayout() {
 
   const navItems = [
     { name: "My Timelines", path: "/dashboard/" },
-    { name: "Create New", path: "/dashboard/create" },
+    { name: "Feed", path: "/dashboard/feed" },
     { name: "Settings", path: "/dashboard/settings" },
   ];
 

@@ -6,6 +6,7 @@ import DashboardLayout from "./components/DashboardLayout";
 import MyTimelines from "./pages/MyTimelines";
 import Settings from "./pages/Settings";
 import TimelineEditor from "./pages/TimelineEditor";
+import TimelineFeed from "./pages/TimelineFeed";
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<MyTimelines />} />
+          <Route path="feed" element={<TimelineFeed />} />
           <Route path="settings" element={<Settings />} />
           <Route path=":id" element={<TimelineEditor />} />
         </Route>

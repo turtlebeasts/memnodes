@@ -2,36 +2,7 @@ import React, { useRef } from "react";
 import { motion } from "framer-motion";
 import MemoryBubble from "./MemoryBubble";
 
-const sampleMemories = [
-  { title: "Started College", date: "2022-08-01", happiness: 8, future: false },
-  {
-    title: "Won Coding Contest",
-    date: "2023-02-12",
-    happiness: 10,
-    future: false,
-  },
-  {
-    title: "Graduate & Get a Job",
-    date: "2025-06-01",
-    happiness: 9,
-    future: true,
-  },
-  { title: "Travel Europe", date: "2026-04-21", happiness: null, future: true },
-  {
-    title: "Switch to a high paying job",
-    date: "2029-10-21",
-    happiness: null,
-    future: true,
-  },
-  {
-    title: "Build a Startup",
-    date: "2031-08-30",
-    happiness: null,
-    future: true,
-  },
-];
-
-export default function TimelinePreview() {
+export default function TimelinePreview({ memories = [] }) {
   const containerRef = useRef(null);
   let isDown = false;
   let startX;
@@ -69,12 +40,12 @@ export default function TimelinePreview() {
       onMouseLeave={handleMouseLeave}
       onMouseUp={handleMouseUp}
       onMouseMove={handleMouseMove}
-      className="overflow-x-auto scrollbar-hide px-10 py-14 cursor-grab select-none"
+      className="overflow-x-auto scrollbar-hide px-6 py-8 cursor-grab select-none"
     >
       <div className="flex items-center relative space-x-[10rem] min-w-max">
-        {sampleMemories.map((mem, idx) => (
+        {memories.map((mem, idx) => (
           <div key={idx} className="relative flex flex-col items-center">
-            {/* Bubble Node with view-aware animation */}
+            {/* Memory Bubble Node */}
             <motion.div
               whileInView={{ opacity: 1, x: 0 }}
               initial={{ opacity: 0, x: -50 }}
@@ -84,8 +55,8 @@ export default function TimelinePreview() {
               <MemoryBubble memory={mem} />
             </motion.div>
 
-            {/* Line to next bubble with grow effect on view */}
-            {idx < sampleMemories.length - 1 && (
+            {/* Connecting Line to Next Bubble */}
+            {idx < memories.length - 1 && (
               <motion.div
                 whileInView={{ width: "10rem" }}
                 initial={{ width: 0 }}
@@ -101,8 +72,10 @@ export default function TimelinePreview() {
               />
             )}
 
-            {/* Date Label */}
-            <span className="mt-3 text-sm text-gray-400">{mem.date}</span>
+            {/* Date below each bubble */}
+            <span className="mt-3 text-sm text-gray-400">
+              {new Date(mem.date).toLocaleDateString()}
+            </span>
           </div>
         ))}
       </div>
